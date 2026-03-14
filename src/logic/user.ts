@@ -12,19 +12,33 @@ export const _updateProfile = async (userId: string, data: { displayName?: strin
   return response({ error: false, message: "Profile updated", data: updated });
 };
 
+const VALID_PREFERENCE_KEYS = [
+  "aiTone", "responseLength", "useEmojis", "autoCorrectSpelling",
+  "autocompleteSuggestions", "commitmentTracking", "followUpSuggestions", "dailySpiritualPrompts",
+];
+
 export const _updatePreferences = async (userId: string, preferences: any): Promise<Response> => {
   const prefUpdate: any = {};
   for (const key of Object.keys(preferences)) {
-    prefUpdate[`preferences.${key}`] = preferences[key];
+    if (VALID_PREFERENCE_KEYS.includes(key)) {
+      prefUpdate[`preferences.${key}`] = preferences[key];
+    }
   }
   const updated = await updateUser(userId, prefUpdate);
   return response({ error: false, message: "Preferences updated", data: updated });
 };
 
+const VALID_NOTIFICATION_KEYS = ["commitmentReminders", "dailyVerse", "prayerEncouragement", "appUpdates", "fcmToken"];
+
 export const _updateNotifications = async (userId: string, notifications: any): Promise<Response> => {
+  if (notifications.fcmToken !== undefined && (typeof notifications.fcmToken !== "string" || notifications.fcmToken.trim().length === 0)) {
+    return response({ error: true, message: "Invalid FCM token" });
+  }
   const notifUpdate: any = {};
   for (const key of Object.keys(notifications)) {
-    notifUpdate[`notifications.${key}`] = notifications[key];
+    if (VALID_NOTIFICATION_KEYS.includes(key)) {
+      notifUpdate[`notifications.${key}`] = notifications[key];
+    }
   }
   const updated = await updateUser(userId, notifUpdate);
   return response({ error: false, message: "Notification settings updated", data: updated });

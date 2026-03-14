@@ -3,7 +3,7 @@ import { response } from "../helpers/utility";
 import { Response } from "../interface";
 import { createUser, getUserByFirebaseUid, updateUser, deleteUser } from "../dao/user.dao";
 import { deleteUserConversations, getUserConversationIds } from "../dao/conversation.dao";
-import { deleteManyByConversationIds, deleteUserMessages } from "../dao/message.dao";
+import { deleteManyByConversationIds } from "../dao/message.dao";
 import { deleteUserCheckIns } from "../dao/checkIn.dao";
 import { deleteUserCommitments } from "../dao/commitment.dao";
 import { deleteUserMemory } from "../dao/userMemory.dao";
