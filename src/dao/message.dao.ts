@@ -22,7 +22,7 @@ export const countConversationMessages = async (conversationId: string) => {
 };
 
 export const updateMessageReactions = async (id: string, reactions: any) => {
-  return await Message.findByIdAndUpdate(id, { $set: { reactions } }, { new: true }).exec();
+  return await Message.findByIdAndUpdate(id, { $set: { reactions } }, { returnDocument: "after" }).exec();
 };
 
 export const deleteConversationMessages = async (conversationId: string): Promise<any> => {

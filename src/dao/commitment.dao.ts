@@ -16,7 +16,7 @@ export const getUserCommitments = async (userId: string, status?: string) => {
 };
 
 export const updateCommitment = async (id: string, data: any) => {
-  return await Commitment.findByIdAndUpdate(id, data, { new: true }).exec();
+  return await Commitment.findByIdAndUpdate(id, data, { returnDocument: "after" }).exec();
 };
 
 export const deleteCommitment = async (id: string) => {

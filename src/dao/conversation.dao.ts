@@ -22,14 +22,14 @@ export const countUserConversations = async (userId: string, search?: string) =>
 };
 
 export const updateConversation = async (id: string, data: any) => {
-  return await Conversation.findByIdAndUpdate(id, data, { new: true }).exec();
+  return await Conversation.findByIdAndUpdate(id, data, { returnDocument: "after" }).exec();
 };
 
 export const incrementConversationMessageCount = async (id: string) => {
   return await Conversation.findByIdAndUpdate(
     id,
     { $inc: { messageCount: 1 }, $set: { lastMessageAt: new Date() } },
-    { new: true }
+    { returnDocument: "after" }
   ).exec();
 };
 

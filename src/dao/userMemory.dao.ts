@@ -8,7 +8,7 @@ export const upsertUserMemory = async (userId: string, memories: any[]) => {
   return await UserMemory.findOneAndUpdate(
     { userId },
     { $push: { memories: { $each: memories } }, $set: { lastUpdated: new Date() } },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: "after" }
   ).exec();
 };
 
@@ -16,7 +16,7 @@ export const clearUserMemory = async (userId: string) => {
   return await UserMemory.findOneAndUpdate(
     { userId },
     { $set: { memories: [], lastUpdated: new Date() } },
-    { new: true }
+    { returnDocument: "after" }
   ).exec();
 };
 

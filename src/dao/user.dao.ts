@@ -14,7 +14,7 @@ export const getUserById = async (id: string) => {
 };
 
 export const updateUser = async (id: string, data: any) => {
-  return await User.findByIdAndUpdate(id, data, { new: true }).exec();
+  return await User.findByIdAndUpdate(id, data, { returnDocument: "after" }).exec();
 };
 
 export const deleteUser = async (id: string) => {
@@ -32,7 +32,7 @@ export const incrementDailyUsage = async (id: string, tokens: number) => {
       },
       $set: { lastActiveAt: new Date() },
     },
-    { new: true }
+    { returnDocument: "after" }
   ).exec();
 };
 
