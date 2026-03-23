@@ -68,7 +68,7 @@ const buildSystemPrompt = (
   return sections.join("\n\n");
 };
 
-export const _sendMessage = async (userId: string, conversationId: string, content: string): Promise<Response> => {
+export const _sendMessage = async (userId: string, conversationId: string, content: string, media?: { url: string; type: string; mimeType: string; fileName?: string }): Promise<Response> => {
   if (!content || content.trim().length === 0) {
     return response({ error: true, message: "Message content is required" });
   }
@@ -78,7 +78,11 @@ export const _sendMessage = async (userId: string, conversationId: string, conte
   if (conversation.userId.toString() !== userId) return response({ error: true, message: "Unauthorized" });
 
   const safety = runSafetyCheck(content);
-  await createMessage({ conversationId, userId, role: "user", content });
+  const userMessageData: any = { conversationId, userId, role: "user", content };
+  if (media) {
+    userMessageData.media = { type: media.type, url: media.url, mimeType: media.mimeType, fileName: media.fileName };
+  }
+  await createMessage(userMessageData);
 
   const [user, memoryDoc, recentMessages, topic] = await Promise.all([
     getUserById(userId),
@@ -93,6 +97,7 @@ export const _sendMessage = async (userId: string, conversationId: string, conte
   const aiMessages = recentMessages.map((m: any) => ({
     role: m.role as "user" | "assistant" | "system",
     content: m.content,
+    ...(m.media?.url && m.media.mimeType?.startsWith("image/") ? { media: { url: m.media.url, mimeType: m.media.mimeType } } : {}),
   }));
 
   const tier = classifyMessageTier(content, conversation.messageCount);

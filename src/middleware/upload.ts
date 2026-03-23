@@ -2,7 +2,7 @@ import multer, { MulterError } from "multer";
 import { Request, Response, NextFunction } from "express";
 
 const PROFILE_PHOTO_TYPES = ["image/jpeg", "image/png"];
-const CHAT_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"];
+const CHAT_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 const profilePhotoUpload = multer({
   storage: multer.memoryStorage(),
@@ -23,7 +23,7 @@ const chatMediaUpload = multer({
     if (CHAT_MEDIA_TYPES.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Only images (JPEG, PNG, GIF, WebP) and PDF files are allowed"));
+      cb(new Error("Only images (JPEG, PNG, GIF, WebP) are allowed"));
     }
   },
 });

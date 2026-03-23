@@ -1,6 +1,12 @@
+export interface AIMediaAttachment {
+  url: string;
+  mimeType: string;
+}
+
 export interface AIMessage {
   role: "user" | "assistant" | "system";
   content: string;
+  media?: AIMediaAttachment;
 }
 
 export interface AIConfig {
