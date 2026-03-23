@@ -28,9 +28,9 @@ const chatMediaUpload = multer({
   },
 });
 
-const wrapUpload = (upload: multer.Multer) =>
+const wrapUpload = (upload: multer.Multer, fieldName: string) =>
   (req: Request, res: Response, next: NextFunction): void => {
-    upload.single("file")(req, res, (err: any) => {
+    upload.single(fieldName)(req, res, (err: any) => {
       if (err instanceof MulterError) {
         const message = err.code === "LIMIT_FILE_SIZE" ? "File is too large" : err.message;
         res.status(400).json({ error: true, message });
@@ -44,5 +44,5 @@ const wrapUpload = (upload: multer.Multer) =>
     });
   };
 
-export const uploadProfilePhoto = wrapUpload(profilePhotoUpload);
-export const uploadChatMedia = wrapUpload(chatMediaUpload);
+export const uploadProfilePhoto = wrapUpload(profilePhotoUpload, "photo");
+export const uploadChatMedia = wrapUpload(chatMediaUpload, "media");
