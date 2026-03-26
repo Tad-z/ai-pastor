@@ -81,8 +81,13 @@ export const _sendMessage = async (userId: string, conversationId: string, conte
 
   const safety = runSafetyCheck(content);
   const userMessageData: any = { conversationId, userId, role: "user", content };
-  if (media) {
-    userMessageData.media = { type: media.type, url: media.url, mimeType: media.mimeType, fileName: media.fileName };
+  if (media?.url) {
+    userMessageData.media = {
+      type: media.type || "image",
+      url: media.url,
+      mimeType: media.mimeType || "image/jpeg",
+      fileName: media.fileName,
+    };
   }
   await createMessage(userMessageData);
 
