@@ -77,6 +77,8 @@ export const _sendMessage = async (userId: string, conversationId: string, conte
   if (!conversation) return response({ error: true, message: "Conversation not found" });
   if (conversation.userId.toString() !== userId) return response({ error: true, message: "Unauthorized" });
 
+  console.log("[sendMessage] media received:", media ? JSON.stringify(media) : "none");
+
   const safety = runSafetyCheck(content);
   const userMessageData: any = { conversationId, userId, role: "user", content };
   if (media) {
