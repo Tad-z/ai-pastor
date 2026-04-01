@@ -8,6 +8,8 @@ export const redis = new Redis({
   password: env.redis.password || undefined,
   lazyConnect: true,
   enableReadyCheck: false,
+  maxRetriesPerRequest: 3,
+  commandTimeout: 5000,
 });
 
 redis.on("connect", () => console.log("Redis connected"));
@@ -15,4 +17,8 @@ redis.on("error", (err) => console.error("Redis error:", err));
 
 export const connectRedis = async (): Promise<void> => {
   await redis.connect();
+};
+
+export const disconnectRedis = async (): Promise<void> => {
+  await redis.quit();
 };

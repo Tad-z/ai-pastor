@@ -4,7 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { env } from "./config/env";
 import { connectDatabase } from "./config/database";
-import { connectRedis } from "./config/redis";
+import { connectRedis, disconnectRedis } from "./config/redis";
 import routes from "./routes";
 import { startJobs } from "./jobs";
 
@@ -40,5 +40,14 @@ const start = async () => {
 };
 
 start();
+
+const shutdown = async () => {
+  console.log("Shutting down gracefully...");
+  await disconnectRedis();
+  process.exit(0);
+};
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
 export default app;
