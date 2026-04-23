@@ -9,6 +9,7 @@ export interface IUser {
   preferences: {
     aiTone: "gentle" | "direct" | "reflective";
     responseLength: "short" | "detailed";
+    churchTradition: "none" | "anglican" | "catholic" | "baptist" | "pentecostal" | "methodist" | "reformed";
     useEmojis: boolean;
     autoCorrectSpelling: boolean;
     autocompleteSuggestions: boolean;

@@ -14,17 +14,19 @@ import {
   TONE_INSTRUCTIONS,
   LENGTH_INSTRUCTIONS,
   EMOJI_INSTRUCTIONS,
+  TRADITION_INSTRUCTIONS,
 } from "../providers/ai/prompts";
 
 /**
  * Assembles the full system prompt per the order defined in system-prompt.md:
  * 1. Safety overrides  (highest priority — always first)
  * 2. Base system prompt
- * 3. Tone instruction
- * 4. Length instruction
- * 5. Emoji instruction
- * 6. User memories     (only if personalizeWithMemories is true and memories exist)
- * 7. Topic context     (only if the conversation has a topic)
+ * 3. Church tradition  (only when set to something other than "none")
+ * 4. Tone instruction
+ * 5. Length instruction
+ * 6. Emoji instruction
+ * 7. User memories     (only if personalizeWithMemories is true and memories exist)
+ * 8. Topic context     (only if the conversation has a topic)
  */
 const buildSystemPrompt = (
   user: any,
@@ -34,6 +36,7 @@ const buildSystemPrompt = (
 ): string => {
   const tone: string = user?.preferences?.aiTone || "gentle";
   const length: string = user?.preferences?.responseLength || "detailed";
+  const tradition: string = user?.preferences?.churchTradition || "none";
   const useEmojis: boolean = user?.preferences?.useEmojis !== false;
   const personalizeWithMemories: boolean = user?.dataControls?.personalizeWithMemories !== false;
 
@@ -45,22 +48,28 @@ const buildSystemPrompt = (
   // 2. Base system prompt
   sections.push(BASE_SYSTEM_PROMPT);
 
-  // 3. Tone
+  // 3. Church tradition — only when the user has chosen one
+  const traditionInstr = TRADITION_INSTRUCTIONS[tradition] ?? "";
+  if (traditionInstr) {
+    sections.push(`${traditionInstr} Never disparage or dismiss other Christian traditions — speak about them with respect.`);
+  }
+
+  // 4. Tone
   sections.push(TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.gentle);
 
-  // 4. Length
+  // 5. Length
   sections.push(LENGTH_INSTRUCTIONS[length] ?? LENGTH_INSTRUCTIONS.detailed);
 
-  // 5. Emoji
+  // 6. Emoji
   sections.push(useEmojis ? EMOJI_INSTRUCTIONS.on : EMOJI_INSTRUCTIONS.off);
 
-  // 6. User memories — only when the user has opted in and facts exist
+  // 7. User memories — only when the user has opted in and facts exist
   if (personalizeWithMemories && memories.length > 0) {
     const facts = memories.map((f) => `- ${f}`).join("\n");
     sections.push(`WHAT YOU KNOW ABOUT THIS PERSON:\n${facts}\n\nUse this context to be more personal and relevant, but don't reference these facts unless naturally relevant to the conversation.`);
   }
 
-  // 7. Topic context — only when the conversation was started from a topic chip
+  // 8. Topic context — only when the conversation was started from a topic chip
   if (topic?.systemPromptAddition) {
     sections.push(`TOPIC CONTEXT: ${topic.systemPromptAddition}`);
   }

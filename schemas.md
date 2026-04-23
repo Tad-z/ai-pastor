@@ -18,6 +18,7 @@ All collections use MongoDB via Mongoose. Every model file goes in `src/database
 | isAnonymous | Boolean | True if user skipped sign-in. Gates features requiring real auth |
 | preferences.aiTone | Enum: gentle, direct, reflective | AI personality (Gentle & Encouraging, Direct & Practical, Deep & Reflective) |
 | preferences.responseLength | Enum: short, detailed | AI response length |
+| preferences.churchTradition | Enum: none, anglican, catholic, baptist, pentecostal, methodist, reformed | Church tradition the AI gently leans into. Default `none` keeps responses ecumenical. |
 | preferences.useEmojis | Boolean | AI emoji usage |
 | preferences.autoCorrectSpelling | Boolean | Auto-correct before sending to AI |
 | preferences.autocompleteSuggestions | Boolean | Show suggested prompts |

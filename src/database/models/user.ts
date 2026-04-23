@@ -11,6 +11,11 @@ const userSchema = new Schema(
     preferences: {
       aiTone: { type: String, enum: ["gentle", "direct", "reflective"], default: "gentle" },
       responseLength: { type: String, enum: ["short", "detailed"], default: "detailed" },
+      churchTradition: {
+        type: String,
+        enum: ["none", "anglican", "catholic", "baptist", "pentecostal", "methodist", "reformed"],
+        default: "none",
+      },
       useEmojis: { type: Boolean, default: true },
       autoCorrectSpelling: { type: Boolean, default: false },
       autocompleteSuggestions: { type: Boolean, default: true },

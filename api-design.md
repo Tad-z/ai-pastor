@@ -18,7 +18,7 @@ All endpoints prefixed with `/api/v1`. All routes except auth require a valid Fi
 |--------|----------|-----------|-----------|-------------|
 | GET | /user/profile | user.ts | auth | Get profile, preferences, notification settings, usage stats. |
 | PATCH | /user/profile | user.ts | auth | Update display name, profile photo. |
-| PATCH | /user/preferences | user.ts | auth | Update AI preferences (tone, length, emojis, etc.). |
+| PATCH | /user/preferences | user.ts | auth | Update AI preferences (tone, length, church tradition, emojis, etc.). |
 | PATCH | /user/notifications | user.ts | auth | Update notification toggles, FCM token. |
 | PATCH | /user/data-controls | user.ts | auth | Update memory and model training consent. |
 | GET | /user/usage | user.ts | auth | Get daily usage: messages sent, remaining, reset time. |

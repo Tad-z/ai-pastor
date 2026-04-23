@@ -13,7 +13,7 @@ export const _updateProfile = async (userId: string, data: { displayName?: strin
 };
 
 const VALID_PREFERENCE_KEYS = [
-  "aiTone", "responseLength", "useEmojis", "autoCorrectSpelling",
+  "aiTone", "responseLength", "churchTradition", "useEmojis", "autoCorrectSpelling",
   "autocompleteSuggestions", "commitmentTracking", "followUpSuggestions", "dailySpiritualPrompts",
 ];
 
