@@ -3,3 +3,10 @@ dist/
 .env
 *.log
 .DS_Store
+.env.example
+api-design.md
+architecture.md
+CLAUDE.md
+feature-flows.md
+schemas.md
+system-prompt.md
