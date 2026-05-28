@@ -27,7 +27,7 @@ interface VerseEntry {
 
 // Helper to create a date for a given day of year
 const dateForDay = (month: number, day: number): Date => {
-  return new Date(year, month - 1, day, 0, 0, 0, 0);
+  return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
 };
 
 const verses: { month: number; day: number; verse: VerseEntry }[] = [
