@@ -35,7 +35,7 @@ const buildSystemPrompt = (
   safetyOverrides: string[]
 ): string => {
   const tone: string = user?.preferences?.aiTone || "gentle";
-  const length: string = user?.preferences?.responseLength || "detailed";
+  const length: string = user?.preferences?.responseLength || "medium";
   const tradition: string = user?.preferences?.churchTradition || "none";
   const useEmojis: boolean = user?.preferences?.useEmojis !== false;
   const personalizeWithMemories: boolean = user?.dataControls?.personalizeWithMemories !== false;
@@ -58,7 +58,7 @@ const buildSystemPrompt = (
   sections.push(TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.gentle);
 
   // 5. Length
-  sections.push(LENGTH_INSTRUCTIONS[length] ?? LENGTH_INSTRUCTIONS.detailed);
+  sections.push(LENGTH_INSTRUCTIONS[length] ?? LENGTH_INSTRUCTIONS.medium);
 
   // 6. Emoji
   sections.push(useEmojis ? EMOJI_INSTRUCTIONS.on : EMOJI_INSTRUCTIONS.off);
@@ -117,6 +117,9 @@ export const _sendMessage = async (userId: string, conversationId: string, conte
   }));
 
   const tier = classifyMessageTier(content, conversation.messageCount);
+  // Response length is controlled by the prompt (LENGTH_INSTRUCTIONS, injected in buildSystemPrompt),
+  // not a token cap: a low maxOutputTokens lets Gemini 2.5's thinking tokens starve/truncate the
+  // answer. With no cap and default dynamic thinking, the model follows the brevity instruction.
   const aiResult = await routeAIRequest(aiMessages, { systemPrompt }, tier);
   const scriptureReferences = parseScriptureReferences(aiResult.text);
 

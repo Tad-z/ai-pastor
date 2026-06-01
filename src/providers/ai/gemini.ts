@@ -32,9 +32,19 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
 const createGeminiProvider = (modelName: string): AIProvider => ({
   async generate(messages: AIMessage[], config: AIConfig): Promise<AIResponse> {
     const start = Date.now();
+    const generationConfig: {
+      maxOutputTokens?: number;
+      temperature?: number;
+      thinkingConfig?: { thinkingBudget: number };
+    } = {};
+    if (typeof config.maxTokens === "number") generationConfig.maxOutputTokens = config.maxTokens;
+    if (typeof config.temperature === "number") generationConfig.temperature = config.temperature;
+    if (typeof config.thinkingBudget === "number") generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
+
     const model = genAI.getGenerativeModel({
       model: modelName,
       systemInstruction: config.systemPrompt,
+      ...(Object.keys(generationConfig).length ? { generationConfig } : {}),
     });
 
     const history = messages.slice(0, -1).map((m) => ({

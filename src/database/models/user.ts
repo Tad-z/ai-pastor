@@ -10,7 +10,7 @@ const userSchema = new Schema(
     isAnonymous: { type: Boolean, default: false },
     preferences: {
       aiTone: { type: String, enum: ["gentle", "direct", "reflective"], default: "gentle" },
-      responseLength: { type: String, enum: ["short", "detailed"], default: "detailed" },
+      responseLength: { type: String, enum: ["short", "medium", "detailed"], default: "medium" },
       churchTradition: {
         type: String,
         enum: ["none", "anglican", "catholic", "baptist", "pentecostal", "methodist", "reformed"],

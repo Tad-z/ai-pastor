@@ -13,6 +13,9 @@ export interface AIConfig {
   systemPrompt: string;
   temperature?: number;
   maxTokens?: number;
+  // Gemini 2.5 reasoning budget. Set to 0 to disable "thinking" tokens, which
+  // otherwise consume maxTokens before any answer is produced (truncates short replies).
+  thinkingBudget?: number;
 }
 
 export interface AIResponse {

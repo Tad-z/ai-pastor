@@ -115,7 +115,7 @@ const topics = [
 
 const seed = async () => {
   try {
-    await mongoose.connect(env.mongodbUri);
+    await mongoose.connect(env.mongodbUri, { dbName: env.dbName || undefined });
     console.log("Connected to MongoDB");
 
     await Topic.deleteMany({});
