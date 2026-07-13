@@ -11,6 +11,8 @@ export const env = {
     port: parseInt(process.env.REDIS_PORT || "6379", 10),
     username: process.env.REDIS_USERNAME || "",
     password: process.env.REDIS_PASSWORD || "",
+    // Upstash and most managed Redis require TLS. Set REDIS_TLS=true to enable.
+    tls: process.env.REDIS_TLS === "true",
   },
   firebase: {
     projectId: process.env.FIREBASE_PROJECT_ID || "",

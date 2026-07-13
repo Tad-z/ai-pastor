@@ -2,6 +2,8 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import mongoose from "mongoose";
+import cron from "node-cron";
 import { env } from "./config/env";
 import { connectDatabase } from "./config/database";
 import { connectRedis, disconnectRedis } from "./config/redis";
@@ -9,6 +11,10 @@ import routes from "./routes";
 import { startJobs } from "./jobs";
 
 const app = express();
+
+// Behind Nginx (host reverse proxy) — trust the first proxy hop so req.ip and
+// X-Forwarded-For reflect the real client (needed for rate limiting & logs).
+app.set("trust proxy", 1);
 
 app.use(helmet());
 app.use(cors());
@@ -30,24 +36,52 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   res.status(err.status || 500).json({ error: true, message: err.message || "Internal server error" });
 });
 
+let server: ReturnType<typeof app.listen>;
+
 const start = async () => {
   await connectDatabase();
   await connectRedis();
   startJobs();
-  app.listen(env.port, () => {
+  server = app.listen(env.port, () => {
     console.log(`AI Pastor running on port ${env.port} [${env.nodeEnv}]`);
   });
 };
 
 start();
 
-const shutdown = async () => {
-  console.log("Shutting down gracefully...");
-  await disconnectRedis();
+let shuttingDown = false;
+
+const shutdown = async (signal: string) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`\n[${signal}] Shutting down gracefully...`);
+
+  // 1. Stop cron jobs so nothing new kicks off mid-shutdown
+  cron.getTasks().forEach((task) => task.stop());
+
+  // 2. Stop accepting new HTTP connections, drain in-flight requests
+  await new Promise<void>((resolve) => {
+    if (!server) return resolve();
+    server.close(() => resolve());
+  });
+
+  // 3. Close external connections
+  try {
+    await disconnectRedis();
+    await mongoose.connection.close();
+  } catch (err) {
+    console.error("Error during shutdown:", err);
+  }
+
+  console.log("Shutdown complete.");
   process.exit(0);
 };
 
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
+// Docker/Nginx send SIGTERM on `docker stop`; Ctrl+C sends SIGINT
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+
+// Force-exit if graceful shutdown hangs (e.g. a stuck connection)
+process.on("SIGTERM", () => setTimeout(() => process.exit(1), 10000).unref());
 
 export default app;

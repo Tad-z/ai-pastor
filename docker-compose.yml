@@ -1,0 +1,44 @@
+# Single-instance stack for the VPS.
+#
+# IMPORTANT: run EXACTLY ONE replica of `app`. The cron jobs in src/jobs run
+# in-process (node-cron), so a second container would double-fire every job
+# (double daily resets, double verse notifications, etc). Do not scale this up.
+#
+# MongoDB (Atlas) and Redis (Upstash) are external — configured via .env.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-pastor:latest
+    container_name: ai-pastor
+    restart: unless-stopped
+    # env vars (MONGODB_URI, REDIS_*, FIREBASE_*, GEMINI_API_KEY, ...) live in
+    # .env on the VPS — never commit it.
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - TZ=UTC
+      - PORT=3000
+    # Bind to loopback only — Nginx on the host proxies public traffic in.
+    # The app is never exposed directly to the internet.
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -6,6 +6,7 @@ export const redis = new Redis({
   port: env.redis.port,
   username: env.redis.username || undefined,
   password: env.redis.password || undefined,
+  tls: env.redis.tls ? {} : undefined,
   lazyConnect: true,
   enableReadyCheck: false,
   maxRetriesPerRequest: 3,
