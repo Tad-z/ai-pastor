@@ -96,7 +96,7 @@ REDIS_HOST=...             # Upstash
 REDIS_PORT=...
 REDIS_USERNAME=...
 REDIS_PASSWORD=...
-REDIS_TLS=true             # Upstash requires TLS
+REDIS_TLS=false            # keep false — this Upstash DB uses a plaintext endpoint (as on Render)
 FIREBASE_PROJECT_ID=...
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 FIREBASE_CLIENT_EMAIL=...
@@ -106,9 +106,11 @@ CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
 ```
 
-> **Redis TLS:** on Render this may have worked without TLS. Upstash's standard
-> endpoint uses TLS — set `REDIS_TLS=true`. If your endpoint is the non-TLS one,
-> leave it `false`. If Redis fails to connect on boot, flip this value.
+> **Redis TLS:** keep `REDIS_TLS=false`. This Upstash database uses a plaintext
+> endpoint (that's how it ran on Render — no TLS). Only set `true` if your Upstash
+> connection string is `rediss://` (TLS). Symptom of a mismatch:
+> `ERR_SSL_WRONG_VERSION_NUMBER` on boot (TLS on) or a RESP protocol error (TLS off) —
+> flip the value if you see either.
 
 ### 5. First manual deploy (verify before wiring CI)
 
