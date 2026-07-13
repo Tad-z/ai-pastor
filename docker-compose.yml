@@ -13,10 +13,11 @@ services:
     image: ai-pastor:latest
     container_name: ai-pastor
     restart: unless-stopped
-    # env vars (MONGODB_URI, REDIS_*, FIREBASE_*, GEMINI_API_KEY, ...) live in
-    # .env on the VPS — never commit it.
-    env_file:
-      - .env
+    # .env is mounted (not parsed by Compose) so the app's own dotenv reads it.
+    # Compose's env_file parser is strict and breaks on the multi-line, quoted
+    # FIREBASE_PRIVATE_KEY; dotenv handles it the same way as local dev / Render.
+    volumes:
+      - ./.env:/app/.env:ro
     environment:
       - NODE_ENV=production
       - TZ=UTC
