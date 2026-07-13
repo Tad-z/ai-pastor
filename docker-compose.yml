@@ -13,11 +13,12 @@ services:
     image: ai-pastor:latest
     container_name: ai-pastor
     restart: unless-stopped
-    # .env is mounted (not parsed by Compose) so the app's own dotenv reads it.
-    # Compose's env_file parser is strict and breaks on the multi-line, quoted
-    # FIREBASE_PRIVATE_KEY; dotenv handles it the same way as local dev / Render.
+    # Secrets live in app.env (NOT .env) so Docker Compose never auto-parses it —
+    # Compose eagerly reads any file named `.env` for interpolation and its strict
+    # parser breaks on the multi-line, quoted FIREBASE_PRIVATE_KEY. We mount app.env
+    # as /app/.env and let the app's own dotenv (lenient) parse it, same as dev/Render.
     volumes:
-      - ./.env:/app/.env:ro
+      - ./app.env:/app/.env:ro
     environment:
       - NODE_ENV=production
       - TZ=UTC

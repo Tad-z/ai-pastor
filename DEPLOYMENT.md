@@ -69,17 +69,23 @@ chmod 700 /home/deploy/.ssh && chmod 600 /home/deploy/.ssh/authorized_keys
 
 The **private** key (`ai-pastor-deploy`) goes into the `VPS_SSH_KEY` GitHub secret (step 6).
 
-### 4. Clone the repo and create `.env`
+### 4. Clone the repo and create `app.env`
+
+> Secrets go in **`app.env`**, not `.env`. Docker Compose eagerly parses any file
+> named `.env` with a strict parser that breaks on the multi-line, quoted
+> `FIREBASE_PRIVATE_KEY`. `app.env` is mounted into the container as `/app/.env`
+> and read by the app's own (lenient) dotenv instead.
 
 ```bash
 su - deploy
 git clone https://github.com/<you>/ai-pastor.git
 cd ai-pastor
-cp .env.example .env
-nano .env   # fill in real values — see below
+cp .env.example app.env
+nano app.env   # fill in real values — see below
+chmod 644 app.env   # readable by the container's non-root `node` user
 ```
 
-`.env` lives **only on the VPS** and is gitignored. Required keys:
+`app.env` lives **only on the VPS** and is gitignored. Required keys:
 
 ```
 PORT=3000
@@ -194,8 +200,8 @@ docker compose up -d --build
 
 ## Notes / gotchas
 
-- **`.env` changes are not deployed by CI** (it's gitignored and lives on the VPS).
-  After editing `.env`, run `docker compose up -d` to pick up new values.
+- **`app.env` changes are not deployed by CI** (it's gitignored and lives on the VPS).
+  After editing `app.env`, run `docker compose up -d` to pick up new values.
 - **Graceful shutdown:** on deploy, `docker compose up` sends SIGTERM; the app stops
   crons, drains in-flight requests, and closes Mongo/Redis before exiting (10s cap).
 - **Single instance only** — see the warning at the top. If you ever need horizontal
