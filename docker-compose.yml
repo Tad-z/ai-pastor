@@ -1,12 +1,20 @@
 # Single-instance stack for the VPS.
 #
-# IMPORTANT: run EXACTLY ONE replica of `app`. The cron jobs in src/jobs run
+# IMPORTANT: run EXACTLY ONE replica of `pastor`. The cron jobs in src/jobs run
 # in-process (node-cron), so a second container would double-fire every job
 # (double daily resets, double verse notifications, etc). Do not scale this up.
 #
-# MongoDB (Atlas) and Redis (Upstash) are external — configured via .env.
+# MongoDB (Atlas) and Redis (Upstash) are external — configured via app.env.
+# Public HTTPS is terminated by the SHARED iBetYou Caddy (ibetyou-caddy), which
+# also fronts the iBetYou backend. This stack does NOT run its own Caddy — only
+# one process can own ports 80/443 on the box. ai-pastor joins the iBetYou Caddy
+# network so Caddy can reach it as http://pastor:3000. See DEPLOYMENT.md.
+#
+# The service is named `pastor` (NOT `app`) on purpose: iBetYou's backend service
+# is already named `app` on the shared network, and a duplicate `app` alias would
+# make iBetYou's `reverse_proxy app:3001` randomly hit this container.
 services:
-  app:
+  pastor:
     build:
       context: .
       dockerfile: Dockerfile
@@ -23,8 +31,10 @@ services:
       - NODE_ENV=production
       - TZ=UTC
       - PORT=3000
-    # Bind to loopback only — Nginx on the host proxies public traffic in.
-    # The app is never exposed directly to the internet.
+    # Bind to loopback only — the shared Caddy proxies public traffic in over the
+    # ibetyou_default network (reaches this app as http://pastor:3000). This
+    # 127.0.0.1 publish is just for local debugging (curl on the box); the app is
+    # never exposed directly to the internet.
     ports:
       - "127.0.0.1:3000:3000"
     healthcheck:
@@ -44,3 +54,14 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    # `default` = this stack's own network. `caddy_net` = the external iBetYou
+    # network where ibetyou-caddy lives, so it can route to pastor:3000.
+    networks:
+      - default
+      - caddy_net
+
+networks:
+  caddy_net:
+    external: true
+    # The network ibetyou-caddy is attached to (from `docker inspect ... ibetyou-caddy`).
+    name: ibetyou_default

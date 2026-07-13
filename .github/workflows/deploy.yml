@@ -56,5 +56,5 @@ jobs:
             done
 
             echo "!! Container did not become healthy — dumping logs"
-            docker compose logs --tail=80 app
+            docker compose logs --tail=80 pastor
             exit 1

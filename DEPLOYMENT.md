@@ -116,7 +116,7 @@ CLOUDINARY_API_SECRET=...
 
 ```bash
 docker compose up -d --build
-docker compose logs -f app          # watch for "AI Pastor running on port 3000"
+docker compose logs -f pastor       # watch for "AI Pastor running on port 3000"
 curl -s http://127.0.0.1:3000/health
 docker inspect --format='{{.State.Health.Status}}' ai-pastor   # -> healthy
 ```
@@ -139,40 +139,63 @@ trigger it manually from the **Actions** tab (`workflow_dispatch`).
 
 ---
 
-## Nginx + HTTPS (host-level)
+## HTTPS (shared Caddy on the box)
 
-Nginx runs on the host and proxies public 443 → the app on `127.0.0.1:3000`
-(the container is bound to loopback, never exposed directly).
+This VPS also runs the **iBetYou** stack, whose Caddy container (`ibetyou-caddy`)
+already owns ports 80/443 and terminates TLS for `srv1817758.hstgr.cloud`. Only one
+process can own those ports, so ai-pastor does **not** run its own Caddy — it is
+served **through** the existing iBetYou Caddy via a path prefix.
 
-```bash
-sudo apt update && sudo apt install -y nginx
-sudo cp /home/deploy/ai-pastor/deploy/nginx.conf /etc/nginx/sites-available/ai-pastor
-# edit the file: replace api.yourdomain.com with your real domain
-sudo ln -s /etc/nginx/sites-available/ai-pastor /etc/nginx/sites-enabled/ai-pastor
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-```
+ai-pastor is reachable at **`https://srv1817758.hstgr.cloud/pastor`** — e.g.
+`https://srv1817758.hstgr.cloud/pastor/api/...`. Caddy strips `/pastor`, so the app
+still sees `/api/...` unchanged.
 
-Point an **A record** for your domain at the VPS IP, then enable TLS:
+**How it's wired:**
 
-```bash
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d api.yourdomain.com
-```
+1. ai-pastor's `docker-compose.yml` joins the external `ibetyou_default` network
+   (service named `pastor` to avoid clashing with iBetYou's `app` service), so
+   Caddy can reach it as `http://pastor:3000`.
 
-Certbot rewrites the Nginx config with the SSL block + HTTP→HTTPS redirect and
-auto-renews via its systemd timer. Update the mobile app's base URL to
-`https://api.yourdomain.com`.
+2. Add a path-prefix route to **iBetYou's** Caddyfile (on the VPS, e.g.
+   `/home/debian/TRIVENA/iBetYou/Caddyfile`):
+
+   ```caddy
+   srv1817758.hstgr.cloud {
+       handle_path /pastor/* {
+           reverse_proxy pastor:3000
+       }
+       handle {
+           reverse_proxy app:3001
+       }
+   }
+   ```
+
+3. Reload the shared Caddy (no restart needed):
+
+   ```bash
+   docker exec ibetyou-caddy caddy reload --config /etc/caddy/Caddyfile
+   ```
+
+Verify: `curl -s https://srv1817758.hstgr.cloud/pastor/health` → `{"status":"ok"}`.
+Point the mobile app's base URL at `https://srv1817758.hstgr.cloud/pastor`.
+
+**Upgrading to a real domain later** (recommended before app-store launch): add an
+A record for your domain → `187.124.34.130`, then add a dedicated site block to the
+iBetYou Caddyfile — `api.yourdomain.com { reverse_proxy pastor:3000 }` — and drop
+the `/pastor` prefix. Caddy auto-provisions the cert; nothing else changes.
 
 ### Firewall
 
+Ports 80/443 are already open (iBetYou uses them). If `ufw` is enabled, just ensure:
+
 ```bash
 sudo ufw allow OpenSSH
-sudo ufw allow 'Nginx Full'
-sudo ufw enable
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
 ```
 
-Port 3000 is **not** opened — only Nginx (80/443) is public.
+Port 3000 is **not** opened — only Caddy (80/443) is public; the app is bound to
+`127.0.0.1` for local debugging only.
 
 ---
 
@@ -180,17 +203,17 @@ Port 3000 is **not** opened — only Nginx (80/443) is public.
 
 ```bash
 # Logs
-docker compose logs -f app
+docker compose logs -f pastor
 
 # Restart / stop
-docker compose restart app
+docker compose restart pastor
 docker compose down
 
 # Redeploy manually (same as CI)
 git pull && docker compose up -d --build
 
 # Confirm crons are alive (look for "Background jobs started" at boot)
-docker compose logs app | grep -i "jobs started"
+docker compose logs pastor | grep -i "jobs started"
 ```
 
 ## Rollback
