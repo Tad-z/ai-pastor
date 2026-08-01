@@ -129,9 +129,13 @@ export const _sendMessage = async (userId: string, conversationId: string, conte
     console.error(`[sendMessage] AI request failed (tier ${tier}, conversation ${conversationId}):`, err?.message || err);
     // The provider's raw error (quota codes, RECITATION blocks) is meaningless to
     // someone who just opened up about a struggle — give them something human.
+    // Quota exhaustion won't clear on a retry, so don't tell them to resend.
+    const isQuotaError = /429|quota|RESOURCE_EXHAUSTED/i.test(err?.message || "");
     return response({
       error: true,
-      message: "I'm having trouble finding the right words just now. Please send that again.",
+      message: isQuotaError
+        ? "I can't respond right now, but I don't want you carrying this alone. Please try again a little later, and reach out to someone you trust in the meantime."
+        : "I'm having trouble finding the right words just now. Please send that again.",
     });
   }
   const scriptureReferences = parseScriptureReferences(aiResult.text);
