@@ -70,5 +70,5 @@ const createGeminiProvider = (modelName: string): AIProvider => ({
   },
 });
 
-export const geminiFlash = createGeminiProvider("gemini-2.5-flash");
-export const geminiPro = createGeminiProvider("gemini-2.5-pro");
+export const geminiFlash = createGeminiProvider(env.geminiModelTier1);
+export const geminiPro = createGeminiProvider(env.geminiModelTier2);

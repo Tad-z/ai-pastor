@@ -120,7 +120,15 @@ export const _sendMessage = async (userId: string, conversationId: string, conte
   // Response length is controlled by the prompt (LENGTH_INSTRUCTIONS, injected in buildSystemPrompt),
   // not a token cap: a low maxOutputTokens lets Gemini 2.5's thinking tokens starve/truncate the
   // answer. With no cap and default dynamic thinking, the model follows the brevity instruction.
-  const aiResult = await routeAIRequest(aiMessages, { systemPrompt }, tier);
+  let aiResult;
+  try {
+    aiResult = await routeAIRequest(aiMessages, { systemPrompt }, tier);
+  } catch (err: any) {
+    // Provider failures (quota, timeout, safety block) otherwise surface as a bare
+    // 400 with no trace — the user's message is already persisted at this point.
+    console.error(`[sendMessage] AI request failed (tier ${tier}, conversation ${conversationId}):`, err?.message || err);
+    throw err;
+  }
   const scriptureReferences = parseScriptureReferences(aiResult.text);
 
   const aiMessage = await createMessage({
