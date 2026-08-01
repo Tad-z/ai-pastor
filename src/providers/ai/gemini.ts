@@ -21,6 +21,18 @@ const buildParts = async (message: AIMessage): Promise<Part[]> => {
 const genAI = new GoogleGenerativeAI(env.geminiApiKey);
 const AI_TIMEOUT_MS = 30_000;
 
+// Gemini blocks any candidate that reproduces training data too closely
+// (finishReason RECITATION) and the SDK turns that into a thrown error rather
+// than an empty response. Verbatim Scripture quotation trips this regularly —
+// it is the single most common failure mode for this app. The block is
+// sampling-dependent, so re-rolling at a higher temperature usually clears it.
+// There is no API setting that disables the recitation filter; safetySettings
+// only govern HARM_CATEGORY_* and have no effect here.
+const RECITATION_RETRY_TEMPERATURE = 1.0;
+
+const isRecitationBlock = (err: any): boolean =>
+  typeof err?.message === "string" && err.message.includes("RECITATION");
+
 const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
   Promise.race([
     promise,
@@ -41,12 +53,6 @@ const createGeminiProvider = (modelName: string): AIProvider => ({
     if (typeof config.temperature === "number") generationConfig.temperature = config.temperature;
     if (typeof config.thinkingBudget === "number") generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
 
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-      systemInstruction: config.systemPrompt,
-      ...(Object.keys(generationConfig).length ? { generationConfig } : {}),
-    });
-
     const history = messages.slice(0, -1).map((m) => ({
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
@@ -54,10 +60,34 @@ const createGeminiProvider = (modelName: string): AIProvider => ({
 
     const lastMessage = messages[messages.length - 1];
     const lastParts = await buildParts(lastMessage);
-    const chat = model.startChat({ history });
-    const result = await withTimeout(chat.sendMessage(lastParts), AI_TIMEOUT_MS);
-    const responseText = result.response.text();
-    const usage = result.response.usageMetadata;
+
+    const send = async (temperatureOverride?: number) => {
+      const attemptConfig = { ...generationConfig };
+      if (typeof temperatureOverride === "number") attemptConfig.temperature = temperatureOverride;
+
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction: config.systemPrompt,
+        ...(Object.keys(attemptConfig).length ? { generationConfig: attemptConfig } : {}),
+      });
+
+      const chat = model.startChat({ history });
+      const result = await withTimeout(chat.sendMessage(lastParts), AI_TIMEOUT_MS);
+      // .text() throws when the candidate was blocked — keep it inside the retry.
+      return { text: result.response.text(), usage: result.response.usageMetadata };
+    };
+
+    let attempt;
+    try {
+      attempt = await send();
+    } catch (err) {
+      if (!isRecitationBlock(err)) throw err;
+      console.warn(`[gemini] ${modelName} blocked by RECITATION — retrying at temperature ${RECITATION_RETRY_TEMPERATURE}`);
+      attempt = await send(RECITATION_RETRY_TEMPERATURE);
+    }
+
+    const responseText = attempt.text;
+    const usage = attempt.usage;
 
     return {
       text: responseText,

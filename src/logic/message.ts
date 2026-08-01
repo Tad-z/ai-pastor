@@ -127,7 +127,12 @@ export const _sendMessage = async (userId: string, conversationId: string, conte
     // Provider failures (quota, timeout, safety block) otherwise surface as a bare
     // 400 with no trace — the user's message is already persisted at this point.
     console.error(`[sendMessage] AI request failed (tier ${tier}, conversation ${conversationId}):`, err?.message || err);
-    throw err;
+    // The provider's raw error (quota codes, RECITATION blocks) is meaningless to
+    // someone who just opened up about a struggle — give them something human.
+    return response({
+      error: true,
+      message: "I'm having trouble finding the right words just now. Please send that again.",
+    });
   }
   const scriptureReferences = parseScriptureReferences(aiResult.text);
 
