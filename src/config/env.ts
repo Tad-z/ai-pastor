@@ -26,6 +26,18 @@ export const env = {
   // once billing is enabled to restore the stronger model for sensitive messages.
   geminiModelTier1: process.env.GEMINI_MODEL_TIER1 || "gemini-2.5-flash",
   geminiModelTier2: process.env.GEMINI_MODEL_TIER2 || "gemini-2.5-flash",
+  // Ordered fallback chain, tried in sequence when the model before it is out of
+  // free-tier quota (429) or unavailable (404/503). Free-tier caps are metered
+  // per-project-PER-MODEL, so each extra model here adds a fresh daily allowance
+  // instead of drawing on the same exhausted pool. Comma-separated; set
+  // GEMINI_FALLBACK_MODELS to reorder, or to an empty string to disable fallback.
+  geminiFallbackModels: (
+    process.env.GEMINI_FALLBACK_MODELS ??
+    "gemini-3.5-flash,gemini-3.6-flash,gemini-3-flash-preview,gemini-3.1-flash-lite"
+  )
+    .split(",")
+    .map((m) => m.trim())
+    .filter(Boolean),
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
     apiKey: process.env.CLOUDINARY_API_KEY || "",
