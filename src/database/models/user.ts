@@ -3,7 +3,8 @@ import { Schema, model } from "mongoose";
 const userSchema = new Schema(
   {
     firebaseUid: { type: String, required: true, unique: true },
-    email: { type: String, unique: true, sparse: true },
+    // Uniqueness is enforced by the partial index declared below (not here).
+    email: { type: String },
     displayName: { type: String, default: "Friend" },
     profilePhoto: { type: String },
     authProvider: { type: String, enum: ["google", "apple", "anonymous"], required: true },
@@ -50,6 +51,14 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
+// Unique only across real (string) emails. Guests have no email, and a plain
+// unique/sparse index still indexes an explicit `email: null`, so every guest
+// after the first hit E11000. Keep the name `email_1` — the startup migration in
+// config/database.ts looks it up by that name.
+userSchema.index(
+  { email: 1 },
+  { name: "email_1", unique: true, partialFilterExpression: { email: { $type: "string" } } }
+);
 userSchema.index({ lastActiveAt: -1 });
 userSchema.index({ isAnonymous: 1 });
 

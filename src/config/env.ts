@@ -38,6 +38,16 @@ export const env = {
     .split(",")
     .map((m) => m.trim())
     .filter(Boolean),
+  // POST /auth/register limit, per IP per hour. Raise REGISTER_RATE_LIMIT_MAX or
+  // list IPs in REGISTER_RATE_LIMIT_ALLOWLIST (comma-separated, skip the limit
+  // entirely) for load tests — remove both afterwards to restore the default.
+  registerRateLimit: {
+    max: parseInt(process.env.REGISTER_RATE_LIMIT_MAX || "", 10) || 10,
+    allowlist: (process.env.REGISTER_RATE_LIMIT_ALLOWLIST || "")
+      .split(",")
+      .map((ip) => ip.trim())
+      .filter(Boolean),
+  },
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
     apiKey: process.env.CLOUDINARY_API_KEY || "",

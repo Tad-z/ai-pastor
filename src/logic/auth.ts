@@ -22,9 +22,11 @@ export const _register = async (firebaseUid: string, decodedToken: any): Promise
     firebaseUid,
     authProvider: isAnonymous ? "anonymous" : provider === "apple.com" ? "apple" : "google",
     isAnonymous,
-    email: isAnonymous ? null : decodedToken.email,
+    // Guests have no email — leave the field ABSENT (undefined), never null, so
+    // they stay out of the unique email index instead of colliding on null.
+    email: isAnonymous ? undefined : decodedToken.email || undefined,
     displayName: isAnonymous ? "Friend" : decodedToken.name || decodedToken.email?.split("@")[0] || "Friend",
-    profilePhoto: isAnonymous ? null : decodedToken.picture,
+    profilePhoto: isAnonymous ? undefined : decodedToken.picture,
   };
 
   const user = await createUser(userData);

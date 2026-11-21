@@ -1,6 +1,6 @@
 # Deployment — VPS + Docker + CI/CD
 
-AI Pastor runs as a **single Docker container** behind **host Nginx** (TLS), deployed
+AI Pastor runs as a **single Docker container** behind the **shared iBetYou Caddy** (TLS), deployed
 automatically on every push to `main` via GitHub Actions.
 
 - **MongoDB** → Atlas (external, unchanged)
