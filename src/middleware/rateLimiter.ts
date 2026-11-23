@@ -10,7 +10,7 @@ const REGISTER_MAX_REQUESTS = env.registerRateLimit.max;
 
 // TEMPORARY: mobile dev's IP for the bot/load test (added 2026-11-21).
 // Remove this entry once testing is done to restore the limit for that IP.
-const LOAD_TEST_IPS = ["2001:4860:7:1633::ef"];
+const LOAD_TEST_IPS = ["2001:4860:7:1633::ef", "187.40.251.162"];
 
 // "::ffff:1.2.3.4" (IPv4-mapped IPv6) → "1.2.3.4", and lowercase so IPv6
 // allowlist entries match regardless of case.
